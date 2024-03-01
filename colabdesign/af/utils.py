@@ -9,6 +9,7 @@ from colabdesign.shared.utils import update_dict, Key
 from colabdesign.shared.plot import plot_pseudo_3D, make_animation, show_pdb
 from colabdesign.shared.protein import renum_pdb_str
 from colabdesign.af.alphafold.common import protein
+from utils_comm.log_util import logger
 
 ####################################################
 # AF_UTILS - various utils (save, plot, etc)
@@ -26,10 +27,16 @@ class _af_utils:
     model.set_opt(num_models=1, num_recycles=0)
     model.set_opt(con=dict(num=1)) or set_opt({"con":{"num":1}}) or set_opt("con",num=1)
     model.set_opt(lr=1, set_defaults=True)
+
+    self._args = {'use_templates': True, 'use_multimer': True, 'use_bfloat16': True, 'recycle_mode': 'sample', 'use_mlm': False, 'realign': True, 'debug': False, 'repeat': False, 'homooligomer': False, 'copies': 1, 'optimizer': 'sgd', 'best_metric': 'loss', 'traj_iter': 1, 'traj_max': 10000, 'clear_prev': True, 'use_dgram': False, 'shuffle_first': True, 'use_remat': True, 'alphabet_size': 20, 'use_initial_guess': False, 'use_initial_atom_pos': False, 'redesign': False}
+
+    # Default options
+    self._opt = {'alpha': 2.0, 'con': {'binary': False, 'cutoff': 14.0, 'num': 2, 'num_pos': inf, 'seqsep': 9}, 'dropout': True, 'fape_cutoff': 10.0, 'hard': 0.0, 'i_con': {'binary': False, 'cutoff': 21.6875, 'num': 1, 'num_pos': inf}, 'learning_rate': 0.1, 'norm_seq_grad': True, 'num_models': 1, 'num_recycles': 3, 'pssm_hard': True, 'sample_models': True, 'soft': 0.0, 'temp': 1.0, 'template': {'rm_ic': False}, 'weights': {'con': 0.0, 'exp_res': 0.0, 'helix': 0.0, 'i_con': 1.0, 'i_pae': 0.0, 'pae': 0.0, 'plddt': 0.1, 'seq_ent': 0.0}}
     '''
     ks = list(kwargs.keys())
     self.set_args(**{k:kwargs.pop(k) for k in ks if k in self._args})
-        
+    # logger.info(f'{self._args = }\n{ks = }, {args = }')
+    # logger.info(f'\n{self._opt = }\n {self.opt = }')
     if kwargs.pop("set_defaults", False):
       update_dict(self._opt, *args, **kwargs)
 
@@ -39,6 +46,7 @@ class _af_utils:
     '''
     set [arg]uments
     '''
+    # logger.info(f'{kwargs = }')
     for k in ["best_metric", "traj_iter", "shuffle_first"]:
       if k in kwargs: self._args[k] = kwargs.pop(k)
             

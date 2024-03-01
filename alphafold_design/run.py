@@ -7,16 +7,13 @@ from pathlib import Path
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 sys.path.append(os.path.abspath("."))
-from colabdesign import clear_mem, mk_afdesign_model
-
 from alphafold_design.utils.basic import (
-    calc_plddts,
+    check_and_normalize_seq,
     get_all_saved_pdb_seqs,
     get_input_pdb,
-    normalize_seq,
-    save_best_model_pdb,
+    save_all_pdb,
 )
-from alphafold_design.utils.plot import save_plddts_img
+from colabdesign import clear_mem, mk_afdesign_model
 from utils_comm.file_util import file_util
 from utils_comm.log_util import log_args, logger
 
@@ -33,9 +30,11 @@ if target_hotspot == "":
     target_hotspot = None
 
 binder_len = args.binder_len
-binder_seq = normalize_seq(args.binder_seq)
-if binder_seq:
-    binder_len = len(binder_seq)
+args.binder_seq = check_and_normalize_seq(args.binder_seq)
+if args.binder_seq:
+    binder_len = len(args.binder_seq)
+postfix = f"{args.task}_{args.protocol}-s{args.seed}"
+
 
 configs = {
     "pdb_filename": get_input_pdb(args.input_pdb_file),
@@ -45,6 +44,15 @@ configs = {
     "use_multimer": args.use_multimer,
     "rm_target_seq": args.target_flexible,
 }
+
+
+def loop_design():
+    """Use short name for not key information."""
+
+    for _iter in range(args.max_loop_count):
+        pdb_file_postfix = f"{postfix}-i{_iter}.pdb"
+        logger.info(f"{_iter} loop design")
+        design(_iter, args.protocol, pdb_file_postfix)
 
 
 def design(count, protocol, pdb_file_postfix: str):
@@ -65,7 +73,7 @@ def design(count, protocol, pdb_file_postfix: str):
     else:
         verbose = 0
 
-    model.restart(seq=binder_seq)
+    model.restart(seq=args.binder_seq)
     model.set_optimizer(
         optimizer=args.gd_method,
         learning_rate=args.learning_rate,
@@ -86,54 +94,12 @@ def design(count, protocol, pdb_file_postfix: str):
     seq = model.get_seqs()[0]
     pre_saved_seqs = get_all_saved_pdb_seqs(out_dir)
     if seq in pre_saved_seqs:
-        logger.info(f"{seq = } has been generated and saved before.")
+        logger.info(f"{seq = } has been generated and saved before, skip to save.")
         return
-    save_all_pdb(seq, pdb_file_postfix, model)
-
-
-def save_all_pdb(
-    seq,
-    pdb_file_postfix: str,
-    model: mk_afdesign_model,
-):
-    """  
-    """
-    results = calc_plddts(model)
-    # Unique and most important info at head, that's seq here.
-    all_models_dir = out_dir / "all_models_pdb"
-    all_models_dir.mkdir(exist_ok=True, parents=True)
-    out_pdb_filename = (
-        f"seq-{seq}-plddt{results.designed_part_plddt:.2f}-"
-        f"complexScore{results.complex_score:.2f}-{pdb_file_postfix}"
-    )
-    all_models_pdb_file = all_models_dir / out_pdb_filename
-    model.save_pdb(all_models_pdb_file)
-    img_file = all_models_pdb_file.with_suffix(".png")
-    save_plddts_img(img_file, results.all_plddts, model._lengths)
-
-    best_model_dir = out_dir / "best_model_pdb"
-    best_model_dir.mkdir(exist_ok=True)
-    best_model_pdb_file = best_model_dir / out_pdb_filename
-    save_best_model_pdb(all_models_pdb_file, best_model_pdb_file)
-    result_file = best_model_dir / f"{best_model_pdb_file.stem}.json"
-    result_dict = vars(results)
-    result_dict["Sequence"] = seq
-    result_dict["input_binder_seq"] = binder_seq
-    result_dict['args'] = args
-    result_dict.pop('all_plddts')
-
-    file_util.write_json(result_dict, result_file)
-
-
-def loop_design():
-    """Use short name for not key information."""
-    postfix = f"{args.task}_{args.protocol}-s{args.seed}"
-    for _iter in range(args.max_loop_count):
-        pdb_file_postfix = f"{postfix}-i{_iter}.pdb"
-        logger.info(f"{_iter} loop design")
-        design(_iter, args.protocol, pdb_file_postfix)
+    save_all_pdb(seq, args, out_dir, pdb_file_postfix, model)
 
 
 if __name__ == "__main__":
-    loop_design()
+    # loop_design()
+    design(0, args.protocol, f"{postfix}-i0.pdb")
     logger.info("end")

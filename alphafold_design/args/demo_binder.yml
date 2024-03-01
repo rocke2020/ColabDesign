@@ -1,4 +1,4 @@
-task: '8inr-MC5R'
+task: '1YCR'
 protocol: "binder"
 root_out_dir: "/mnt/nas1/alphafold-design/output_test"
 # Currently seed is not used for deterministic, but used in out filenames.
@@ -9,8 +9,8 @@ target_chain: "A"
 target_hotspot: ""
 target_flexible: false
 
-# ideal short peptide length range: 5-8, choose 6 for 8inr-MC5R
-binder_len: 8
+# ideal short peptide length range: 5-8
+binder_len: 12
 # CGGGGC as start sequence.
 binder_seq: ""
 

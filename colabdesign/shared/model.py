@@ -6,6 +6,7 @@ import optax
 from colabdesign.shared.utils import copy_dict, update_dict, softmax, Key
 from colabdesign.shared.prep import rewire
 from colabdesign.af.alphafold.common import residue_constants
+from utils_comm.log_util import ic, logger
 
 aa_order = residue_constants.restype_order
 order_aa = {b:a for a,b in aa_order.items()}
@@ -13,7 +14,7 @@ order_aa = {b:a for a,b in aa_order.items()}
 class design_model:
   def set_weights(self, *args, **kwargs):
     '''
-    set weights
+    set weights of different losses
     -------------------
     note: model.restart() resets the weights to their defaults
     use model.set_weights(..., set_defaults=True) to avoid this
@@ -52,6 +53,7 @@ class design_model:
     if mode is None: mode = []
 
     # decide on shape
+    # dqc, _num is always 1?
     shape = (self._num, self._len, self._args.get("alphabet_size",20))
     
     # initialize bias
@@ -74,9 +76,10 @@ class design_model:
         seq[:,self.opt["pos"],:] = wt_seq
       else:
         seq = wt_seq
-    
     # initialize sequence
     if seq is None:
+      # self.key is random sub key generator, from colabdesign.shared.utils.Key.get()
+      # hasattr(self,"key") returns True.
       if hasattr(self,"key"):
         x = 0.01 * np.random.normal(size=shape)
       else:
@@ -123,7 +126,7 @@ class design_model:
 
     # set seq/bias/state
     self._params["seq"] = x
-    self._inputs["bias"] = b 
+    self._inputs["bias"] = b
 
   def _norm_seq_grad(self):
     g = self.aux["grad"]["seq"]

@@ -319,7 +319,7 @@ class _af_design:
              num_recycles=None, ramp_recycles=False, 
              num_models=None, sample_models=None, models=None,
              backprop=True, callback=None, save_best=False, verbose=1):
-
+    '''soft is the start value, e_soft is the end value, etc.'''
     # update options/settings (if defined)
     self.set_opt(opt, dropout=dropout)
     self.set_weights(weights)    

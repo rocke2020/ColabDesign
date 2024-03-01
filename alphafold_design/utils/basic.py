@@ -10,6 +10,9 @@ import numpy as np
 from numpy import ndarray
 
 sys.path.append(os.path.abspath("."))
+from alphafold_design.utils.plot import save_plddts_img
+from colabdesign import mk_afdesign_model
+from utils_comm.file_util import file_util
 from utils_comm.log_util import logger
 
 
@@ -29,7 +32,7 @@ class AFDesignScores:
     sorted_complex_scores: ndarray | None = None
 
 
-non_alpha = re.compile("[^a-zA-Z]")
+non_upper_alpha = re.compile("[^A-Z]")
 
 
 def calc_plddts(self, get_best=True):
@@ -203,13 +206,48 @@ def get_input_pdb(pdb_code):
     return f"AF-{pdb_code}-F1-model_v3.pdb"
 
 
-def normalize_seq(seq=""):
-    if non_alpha.search(seq):
-        raise ValueError(f"{seq = } has not a-zA-Z chars")
-    seq = seq.upper()
+def check_and_normalize_seq(seq=""):
+    """ If seq is empty, convert to return None, otherwise raise error in design."""
+    if non_upper_alpha.search(seq):
+        raise ValueError(f"{seq = } has not A-Z chars")
     if not seq:
         seq = None
     return seq
+
+
+def save_all_pdb(
+    generated_seq,
+    args,
+    out_dir: Path,
+    pdb_file_postfix: str,
+    model: mk_afdesign_model,
+):
+    """ """
+    results = calc_plddts(model)
+    # Unique and most important info at head, that's seq here.
+    all_models_dir = out_dir / "all_models_pdb"
+    all_models_dir.mkdir(exist_ok=True, parents=True)
+    out_pdb_filename = (
+        f"seq-{generated_seq}-plddt{results.designed_part_plddt:.2f}-"
+        f"complexScore{results.complex_score:.2f}-{pdb_file_postfix}"
+    )
+    all_models_pdb_file = all_models_dir / out_pdb_filename
+    model.save_pdb(all_models_pdb_file)
+    img_file = all_models_pdb_file.with_suffix(".png")
+    save_plddts_img(img_file, results.all_plddts, model._lengths)
+
+    best_model_dir = out_dir / "best_model_pdb"
+    best_model_dir.mkdir(exist_ok=True)
+    best_model_pdb_file = best_model_dir / out_pdb_filename
+    save_best_model_pdb(all_models_pdb_file, best_model_pdb_file)
+    result_file = best_model_dir / f"{best_model_pdb_file.stem}.json"
+    result_dict = vars(results)
+    result_dict["Sequence"] = generated_seq
+    result_dict["input_binder_seq"] = args.binder_seq
+    result_dict["args"] = args
+    result_dict.pop("all_plddts")
+
+    file_util.write_json(result_dict, result_file)
 
 
 if __name__ == "__main__":
