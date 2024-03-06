@@ -5,6 +5,7 @@ import sys
 import warnings
 from pathlib import Path
 
+sys.path.insert(0, os.path.abspath(''))
 warnings.simplefilter(action="ignore", category=FutureWarning)
 sys.path.append(os.path.abspath("."))
 from alphafold_design.utils.basic import (
@@ -48,7 +49,6 @@ configs = {
 
 def loop_design():
     """Use short name for not key information."""
-
     for _iter in range(args.max_loop_count):
         pdb_file_postfix = f"{postfix}-i{_iter}.pdb"
         logger.info(f"{_iter} loop design")

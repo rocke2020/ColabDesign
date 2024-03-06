@@ -1,8 +1,15 @@
 import numpy as np
+from utils_comm.log_util import logger
+
 def prep_pos(pos, residue, chain):
   '''
   given input [pos]itions (a string of segment ranges seperated by comma,
   for example: "1,3-4,10-15"), return list of indices to constrain.
+
+  {'residue': array([ 25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,...,
+        103, 104, 105, 106, 107, 108, 109]), 
+  'chain': array(['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+        'A', 'A', 'A', 'A', 'A', 'A', 'A'], dtype='<U1')}  
   '''
   residue_set = []
   chain_set = []

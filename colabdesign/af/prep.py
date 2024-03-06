@@ -13,6 +13,7 @@ from colabdesign.shared.protein import _np_get_cb, pdb_to_string
 from colabdesign.shared.prep import prep_pos
 from colabdesign.shared.utils import copy_dict
 from colabdesign.shared.model import order_aa
+from utils_comm.log_util import logger
 
 resname_to_idx = residue_constants.resname_to_idx
 idx_to_resname = dict((v,k) for k,v in resname_to_idx.items())
@@ -224,7 +225,7 @@ class _af_prep:
     
     self._len = self._binder_len
     self._lengths = [self._target_len, self._binder_len]
-
+    # logger.info(f'{self._pdb["idx"] = }')
     # gather hotspot info
     if hotspot is not None:
       self.opt["hotspot"] = prep_pos(hotspot, **self._pdb["idx"])["pos"]
