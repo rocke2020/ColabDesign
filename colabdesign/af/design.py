@@ -152,14 +152,14 @@ class _af_design:
             if _v.ndim == 1:
               logger.info(f'{_v = }')
           else:
-            logger.info(f'{k = }, {_v = }')
+            logger.info(f'{_k = }, {_v = }')
       else:
         if isinstance(v, ndarray):
           logger.info(f'{k = }, {v.shape = }')
         else:
           logger.info(f'{k = }, {type(v) = }')
         logger.info(f'{v = }')
-    # self.key() returns a random key which is 1d ndarray with size (2,).
+    ## self.key() returns a random key which is 1d ndarray with size (2,).
     flags  = [self._params, model_params, self._inputs, self.key()]
     if backprop:
       (loss, aux), grad = self._model["grad_fn"](*flags)
@@ -371,6 +371,7 @@ class _af_design:
 
     for i in range(iters):
       for k,(s,e) in m.items():
+        # adjust values in m based on iteration
         if k == "temp":
           self.set_opt({k:(e+(s-e)*(1-(i+1)/iters)**2)})
         else:

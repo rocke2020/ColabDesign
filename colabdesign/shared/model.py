@@ -196,6 +196,8 @@ class design_model:
 
 def soft_seq(x, bias, opt, key=None, num_seq=None, shuffle_first=True):
   seq = {"input":x}
+  # default input, x.shape[0] == 1, num_seq == 1, shuffle_first == True
+  # ic(x.shape, bias.shape,num_seq, shuffle_first)
   # shuffle msa
   if x.ndim == 3 and x.shape[0] > 1 and key is not None:
     key, sub_key = jax.random.split(key)
