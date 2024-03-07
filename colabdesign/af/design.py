@@ -139,26 +139,27 @@ class _af_design:
 
     if return_aux: return self.aux
 
-  def _single(self, model_params, backprop=True):
+  def _single(self, model_params, backprop=True, verbose=0):
     '''single pass through the model'''
     self._inputs["opt"] = self.opt
-    logger.info(f'{self._inputs.keys() = }')
-    for k, v in self._inputs.items():
-      if isinstance(v, dict):
-        logger.info(f'{k = }, {v.keys() = }')
-        for _k, _v in v.items():
-          if isinstance(_v, ndarray):
-            logger.info(f'{_k = }, {_v.shape = }\n{_v[0] = }\n{_v[-1] = }')
-            if _v.ndim == 1:
-              logger.info(f'{_v = }')
-          else:
-            logger.info(f'{_k = }, {_v = }')
-      else:
-        if isinstance(v, ndarray):
-          logger.info(f'{k = }, {v.shape = }')
+    if verbose:
+      logger.info(f'{self._inputs.keys() = }')
+      for k, v in self._inputs.items():
+        if isinstance(v, dict):
+          logger.info(f'{k = }, {v.keys() = }')
+          for _k, _v in v.items():
+            if isinstance(_v, ndarray):
+              logger.info(f'{_k = }, {_v.shape = }\n{_v[0] = }\n{_v[-1] = }')
+              if _v.ndim == 1:
+                logger.info(f'{_v = }')
+            else:
+              logger.info(f'{_k = }, {_v = }')
         else:
-          logger.info(f'{k = }, {type(v) = }')
-        logger.info(f'{v = }')
+          if isinstance(v, ndarray):
+            logger.info(f'{k = }, {v.shape = }')
+          else:
+            logger.info(f'{k = }, {type(v) = }')
+          logger.info(f'{v = }')
     ## self.key() returns a random key which is 1d ndarray with size (2,).
     flags  = [self._params, model_params, self._inputs, self.key()]
     if backprop:
