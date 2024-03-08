@@ -37,8 +37,14 @@ class design_model:
     -bias=array(shape=(20,) or shape=(L,20)) - bias the sequence
     -rm_aa="C,W" = specify which amino acids to remove (aka. add a negative-infinity bias to these aa)
     -----------------------------------
+    raw disulfide design
+      seq: XXXXXXXXXXXXXXXXXXCXXXXXXXXCXXXXXXX
+      mode: None
+      bias: None
+      rm_aa: C
+      kwargs: {'add_seq': True}
     '''
-
+    # ic(seq, mode, bias, rm_aa, kwargs)
     # backward compatibility
     seq_init = kwargs.pop("seq_init",None)
     if seq_init is not None:
@@ -60,7 +66,12 @@ class design_model:
     if bias is None:
       b = np.zeros(shape[1:])
     else:
-      b = np.array(np.broadcast_to(bias, shape[1:]))
+      try:
+        ic(bias.shape, shape)
+        b = np.array(np.broadcast_to(bias, shape[1:]))
+      except Exception as identifier:
+        ic(identifier)
+        raise identifier
 
     # disable certain amino acids
     if rm_aa is not None:
@@ -97,15 +108,15 @@ class design_model:
           seq = np.asarray(seq)
       else:
         seq = np.asarray(seq)
-
+      ic(seq.shape)
       if np.issubdtype(seq.dtype, np.integer):
         seq_ = np.eye(shape[-1])[seq]
         seq_[seq == -1] = 0
         seq = seq_
-      
+      ic(seq.shape)
       if kwargs.pop("add_seq",False):
         b = b + seq * 1e7
-      
+      ic(b.shape)
       if seq.ndim == 2:
         x = np.pad(seq[None],[[0,shape[0]-1],[0,0],[0,0]])
       elif shape[0] > seq.shape[0]:

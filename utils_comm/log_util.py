@@ -21,7 +21,7 @@ ic.configureOutput(includeContext=True, argToStringFunction=str)
 ic.lineWrapWidth = 120
 
 
-FMT = "%(asctime)s %(filename)s L%(lineno)d: %(message)s"
+FMT = "%(asctime)s %(filename)s L %(lineno)d: %(message)s"
 DATE_FORMAT = "%y-%m-%d %H:%M:%S"
 
 

@@ -36,7 +36,7 @@ class _af_utils:
     ks = list(kwargs.keys())
     self.set_args(**{k:kwargs.pop(k) for k in ks if k in self._args})
     # logger.info(f'{self._args = }\n{ks = }, {args = }')
-    logger.info(f'{ks = }, {args = }')
+    # logger.info(f'{ks = }, {args = }')
     # logger.info(f'\n{self.opt = }')
     if kwargs.pop("set_defaults", False):
       update_dict(self._opt, *args, **kwargs)

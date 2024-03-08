@@ -29,7 +29,7 @@ class AFDesignScores:
     i_ptm: float = 0.0
     ptm: float = 0.0
     complex_score: float = 0.0
-    sorted_complex_scores: ndarray | None = None
+    complex_scores_sorted_by_plddt: ndarray | None = None
 
 
 non_upper_alpha = re.compile("[^A-Z]")
@@ -56,15 +56,16 @@ def calc_plddts(self, get_best=True):
     )
 
     mean_designed_part_plddts = plddts_of_designed_part.mean(axis=1)
-    sorted_designed_part_plddts = np.sort(mean_designed_part_plddts)[::-1]
+    ind = np.argsort(mean_designed_part_plddts)[::-1]
+    sorted_designed_part_plddts = mean_designed_part_plddts[ind]
     designed_part_plddt = sorted_designed_part_plddts.mean()
-    i_ptm, ptm, complex_score, complex_scores = 0.0, 0.0, 0.0, None
+    i_ptm, ptm, complex_score, complex_scores_sorted_by_plddt = 0.0, 0.0, 0.0, None
     if self.protocol == "binder":
         i_ptm = aux["i_ptm"]
         ptm = aux["ptm"]
         complex_scores = i_ptm * 0.8 + ptm * 0.2
-        sorted_complex_scores = np.sort(complex_scores)[::-1]
-        complex_score = sorted_complex_scores.mean()
+        complex_scores_sorted_by_plddt = complex_scores[ind]
+        complex_score = complex_scores_sorted_by_plddt.mean()
         i_ptm = i_ptm.mean()
         ptm = ptm.mean()
     results = AFDesignScores(
@@ -75,9 +76,18 @@ def calc_plddts(self, get_best=True):
         i_ptm,
         ptm,
         complex_score,
-        sorted_complex_scores,
+        complex_scores_sorted_by_plddt,
     )
-    logger.info(f"{self.protocol} {designed_part_plddt = } {complex_score = }")
+    best_model_complex_scores = (
+        complex_scores_sorted_by_plddt[0]
+        if complex_scores_sorted_by_plddt is not None
+        else 0.0
+    )
+    logger.info(
+        f"{self.protocol} {designed_part_plddt = } {complex_score = }, "
+        f"best_model_plddt by plddt {sorted_designed_part_plddts[0]}, "
+        f"best_model_complex_scores {best_model_complex_scores}"
+    )
     return results
 
 
@@ -215,18 +225,21 @@ def check_and_normalize_seq(seq=""):
     return seq
 
 
-def save_all_pdb(
-    generated_seq,
+def save_current_pdb(
     args,
     out_dir: Path,
-    pdb_file_postfix: str,
     model: mk_afdesign_model,
+    designed_chain: str,
+    generated_seq: str | None = None,
+    pdb_file_postfix: str = ".pdb",
 ):
-    """ """
+    """just simple save func, not filter low confident pdb."""
     results = calc_plddts(model)
     # Unique and most important info at head, that's seq here.
     all_models_dir = out_dir / "all_models_pdb"
     all_models_dir.mkdir(exist_ok=True, parents=True)
+    if not generated_seq:
+        generated_seq = model.get_seqs()[0]
     out_pdb_filename = (
         f"seq-{generated_seq}-plddt{results.designed_part_plddt:.2f}-"
         f"complexScore{results.complex_score:.2f}-{pdb_file_postfix}"
@@ -239,11 +252,11 @@ def save_all_pdb(
     best_model_dir = out_dir / "best_model_pdb"
     best_model_dir.mkdir(exist_ok=True)
     best_model_pdb_file = best_model_dir / out_pdb_filename
-    save_best_model_pdb(all_models_pdb_file, best_model_pdb_file)
+    save_best_model_pdb(all_models_pdb_file, best_model_pdb_file, designed_chain)
     result_file = best_model_dir / f"{best_model_pdb_file.stem}.json"
     result_dict = vars(results)
     result_dict["Sequence"] = generated_seq
-    result_dict["input_binder_seq"] = args.binder_seq
+    result_dict["input_binder_seq"] = args.get('binder_seq', None)
     result_dict["args"] = args
     result_dict.pop("all_plddts")
 

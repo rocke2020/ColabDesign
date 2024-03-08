@@ -12,7 +12,11 @@ from alphafold_design.utils.basic import (
     check_and_normalize_seq,
     get_all_saved_pdb_seqs,
     get_input_pdb,
-    save_all_pdb,
+    save_current_pdb,
+)
+from alphafold_design.utils.disulfide_bond import (
+    disulfide_loss,
+    generate_one_disulfide_pattern,
 )
 from colabdesign import clear_mem, mk_afdesign_model
 from utils_comm.file_util import file_util
@@ -25,15 +29,17 @@ args = file_util.read_yml(raw_args.args_file)
 log_args(args, logger)
 
 out_dir = Path(args.root_out_dir) / f"{args.task}-{args.protocol}"
+if args.enable_disulfide:
+    out_dir = out_dir.with_name(f"{out_dir.name}-disulfide")
 out_dir.mkdir(exist_ok=True, parents=True)
 target_hotspot = args.target_hotspot
 if target_hotspot == "":
     target_hotspot = None
 
 binder_len = args.binder_len
-args.binder_seq = check_and_normalize_seq(args.binder_seq)
-if args.binder_seq:
-    binder_len = len(args.binder_seq)
+binder_seq = check_and_normalize_seq(args.binder_seq)
+if binder_seq:
+    binder_len = len(binder_seq)
 postfix = f"{args.task}_{args.protocol}-s{args.seed}"
 
 
@@ -65,15 +71,27 @@ def design(count, protocol, pdb_file_postfix: str):
         recycle_mode=args.recycle_mode,
         data_dir=args.af_data_path,
     )
+    if args.enable_disulfide:
+        model._callbacks["model"]["loss"] = [disulfide_loss]
+        model.opt["weights"]["disulfide"] = 1.0
     model.prep_inputs(**configs, ignore_missing=False)
+    if args.enable_disulfide:
+        disulfide_indexes, seq_pattern = generate_one_disulfide_pattern(binder_len)
+        model.restart(seq=seq_pattern, add_seq=True, rm_aa="C")
+        model.opt["disulfide_pattern"] = disulfide_indexes
+        # reweight con:
+        model.opt["weights"]["con"] = 0.5
+    else:
+        model.restart(seq=binder_seq)
     # in binder protocol, model._target_len = 85, model._binder_len = 13, model._len = 13
     if count == 0:
-        logger.info(f"{model._target_len = }, {model._binder_len = }")
+        logger.info(
+            f"{model._target_len = }, {model._binder_len = }, {model.opt['weights'] = }"
+        )
         verbose = 1
     else:
         verbose = 0
 
-    model.restart(seq=args.binder_seq)
     model.set_optimizer(
         optimizer=args.gd_method,
         learning_rate=args.learning_rate,
@@ -96,7 +114,7 @@ def design(count, protocol, pdb_file_postfix: str):
     if seq in pre_saved_seqs:
         logger.info(f"{seq = } has been generated and saved before, skip to save.")
         return
-    save_all_pdb(seq, args, out_dir, pdb_file_postfix, model)
+    save_current_pdb(args, out_dir, model, seq, pdb_file_postfix)
 
 
 if __name__ == "__main__":

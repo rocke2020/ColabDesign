@@ -3,6 +3,7 @@ protocol: "binder"
 root_out_dir: "/mnt/nas1/alphafold-design/output_test"
 # Currently seed is not used for deterministic, but used in out filenames.
 seed: 12
+enable_disulfide: true
 
 input_pdb_file: "alphafold_design/demo_data/pdb/1ycr/1YCR.pdb"
 target_chain: "A"
@@ -24,8 +25,8 @@ max_loop_count: 1
 
 # "pssm_semigreedy", "3stage", "semigreedy", "pssm", "logits", "soft", "hard"
 optimizer_protocol: "pssm_semigreedy"
-soft_iters: 1
-hard_iters: 1
+soft_iters: 2
+hard_iters: 2
 # "adabelief", "adafactor", "adagrad", "adam", "adamw", "fromage", "lamb", "lars", "noisy_sgd", "dpsgd", "radam", "rmsprop", "sgd", "sm3", "yogi"
 gd_method: "sgd"
 learning_rate: 0.05
