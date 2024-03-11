@@ -25,8 +25,8 @@ max_loop_count: 1
 
 # "pssm_semigreedy", "3stage", "semigreedy", "pssm", "logits", "soft", "hard"
 optimizer_protocol: "pssm_semigreedy"
-soft_iters: 120
-hard_iters: 40
+soft_iters: 1
+hard_iters: 1
 # "adabelief", "adafactor", "adagrad", "adam", "adamw", "fromage", "lamb", "lars", "noisy_sgd", "dpsgd", "radam", "rmsprop", "sgd", "sm3", "yogi"
 gd_method: "sgd"
 learning_rate: 0.05

@@ -1,10 +1,11 @@
 import random
 
 import jax.numpy as jnp
+from icecream import ic
 from jax.lax import dynamic_slice
 
 from colabdesign.af.loss import _get_con_loss
-from icecream import ic
+
 ic.configureOutput(includeContext=True, argToStringFunction=str)
 ic.lineWrapWidth = 120
 
@@ -25,7 +26,12 @@ def get_con_loss(
 
 
 def generate_one_disulfide_pattern(length, min_sep=2):
-    """Only consider 1 disulfide bond"""
+    """Only consider 1 disulfide bond
+
+    Returns:
+        disulfide_indexes, [(28, 8)], also with the name "disulfide_patterns"
+        sequence_pattern, XXXXXXXXCXXXXXXXXXXXXXXXXXXXCXXXXXX
+    """
     positions = list(range(length))
     max_loop_count = 1000
     for _ in range(max_loop_count):  # try max_loop_count time per postion.
@@ -72,7 +78,7 @@ def generate_disulfide_pattern(length, disulfide_num=1, min_sep=5):
 def disulfide_loss(inputs, outputs, cutoff=7):
     def get_disulfide_loss(dgram, dgram_bins, disulfide_pattern):
         """
-        Func: simple disulfide loss, make the contacts < 7.0/7.5A.
+        Func: simple disulfide loss, make the Cα distance of cysteine contacts < 7.0A.
         # see: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7316719/
         params: disulfide_pattern: List[(pos1, pos2), (pos3, pos4)...]
         """
@@ -90,6 +96,8 @@ def disulfide_loss(inputs, outputs, cutoff=7):
     # add disulfide loss here:
     dgram_logits = outputs["distogram"]["logits"]
     dgram_bins = jnp.append(0, outputs["distogram"]["bin_edges"])
+    # inputs["opt"]["disulfide_pattern"], e.g., [(28, 8)]
+    ic(dgram_logits.shape, dgram_bins.shape)
     loss = get_disulfide_loss(
         dgram_logits, dgram_bins, inputs["opt"]["disulfide_pattern"]
     )
