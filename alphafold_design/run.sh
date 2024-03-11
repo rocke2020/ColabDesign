@@ -1,7 +1,7 @@
 export NUMEXPR_MAX_THREADS=8
 # run disulfide_design
 file=alphafold_design/run.py
-gpu=2
+gpu=0
 export CUDA_VISIBLE_DEVICES=$gpu
 log_filename=$file-gpu$gpu
 nohup python $file \

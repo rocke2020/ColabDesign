@@ -25,12 +25,14 @@ max_loop_count: 1
 
 # "pssm_semigreedy", "3stage", "semigreedy", "pssm", "logits", "soft", "hard"
 optimizer_protocol: "pssm_semigreedy"
-soft_iters: 2
-hard_iters: 2
+soft_iters: 120
+hard_iters: 40
 # "adabelief", "adafactor", "adagrad", "adam", "adamw", "fromage", "lamb", "lars", "noisy_sgd", "dpsgd", "radam", "rmsprop", "sgd", "sm3", "yogi"
 gd_method: "sgd"
 learning_rate: 0.05
 norm_seq_grad: True
 dropout: True
+
+peptide_chain_id: B
 
 af_data_path: "/mnt/sda/alphafold/af_data"

@@ -114,7 +114,15 @@ def design(count, protocol, pdb_file_postfix: str):
     if seq in pre_saved_seqs:
         logger.info(f"{seq = } has been generated and saved before, skip to save.")
         return
-    save_current_pdb(args, out_dir, model, seq, pdb_file_postfix)
+    designed_chain = args.get('designed_chain', args.peptide_chain_id)
+    save_current_pdb(
+        args,
+        out_dir,
+        model,
+        designed_chain=designed_chain,
+        generated_seq=seq,
+        pdb_file_postfix=pdb_file_postfix,
+    )
 
 
 if __name__ == "__main__":

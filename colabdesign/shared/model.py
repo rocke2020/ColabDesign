@@ -61,17 +61,14 @@ class design_model:
     # decide on shape
     # dqc, _num is always 1?
     shape = (self._num, self._len, self._args.get("alphabet_size",20))
-    
     # initialize bias
     if bias is None:
       b = np.zeros(shape[1:])
     else:
-      try:
-        ic(bias.shape, shape)
-        b = np.array(np.broadcast_to(bias, shape[1:]))
-      except Exception as identifier:
-        ic(identifier)
-        raise identifier
+      if bias.ndim <= 2:
+        b = np.broadcast_to(bias, shape[1:])
+      else:
+        b = bias
 
     # disable certain amino acids
     if rm_aa is not None:
@@ -108,15 +105,12 @@ class design_model:
           seq = np.asarray(seq)
       else:
         seq = np.asarray(seq)
-      ic(seq.shape)
       if np.issubdtype(seq.dtype, np.integer):
         seq_ = np.eye(shape[-1])[seq]
         seq_[seq == -1] = 0
         seq = seq_
-      ic(seq.shape)
       if kwargs.pop("add_seq",False):
         b = b + seq * 1e7
-      ic(b.shape)
       if seq.ndim == 2:
         x = np.pad(seq[None],[[0,shape[0]-1],[0,0],[0,0]])
       elif shape[0] > seq.shape[0]:
